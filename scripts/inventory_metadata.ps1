@@ -50,21 +50,41 @@ foreach ($root in $Roots) {
   $count = 0
   $truncated = $false
   $byType = @{}
-  $scanErrors = @()
-  # Do not use -Force or -FollowSymlink. Reparse files are ignored.
-  $items = Get-ChildItem -LiteralPath $root -File -Recurse -ErrorAction SilentlyContinue -ErrorVariable +scanErrors
-  foreach ($item in $items) {
+  $unreadableCount = 0
+  # Bounded directory-by-directory traversal: no full-root materialization.
+  # Reparse points (including junctions/symlinks) are never followed.
+  $pending = [System.Collections.Generic.Stack[string]]::new()
+  $pending.Push((Resolve-Path -LiteralPath $root).ProviderPath)
+  while ($pending.Count -gt 0) {
     if ($count -ge $MaxFilesPerRoot -or (Get-Date) -gt $deadline) {
       $truncated = $true
       break
     }
-    if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { continue }
-    $count++
-    $ext = $item.Extension.ToLowerInvariant()
-    $category = if ($extensionClasses.ContainsKey($ext)) { $extensionClasses[$ext] } else { "other" }
-    if (-not $byType.ContainsKey($category)) { $byType[$category] = @{ count=0; bytes=0L } }
-    $byType[$category].count++
-    $byType[$category].bytes += $item.Length
+    $folder = $pending.Pop()
+    try {
+      $children = Get-ChildItem -LiteralPath $folder -ErrorAction Stop
+    } catch {
+      $unreadableCount++
+      continue
+    }
+    foreach ($item in $children) {
+      if ($count -ge $MaxFilesPerRoot -or (Get-Date) -gt $deadline) {
+        $truncated = $true
+        break
+      }
+      if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { continue }
+      if ($item.PSIsContainer) {
+        $pending.Push($item.FullName)
+        continue
+      }
+      if (-not ($item -is [System.IO.FileInfo])) { continue }
+      $count++
+      $ext = $item.Extension.ToLowerInvariant()
+      $category = if ($extensionClasses.ContainsKey($ext)) { $extensionClasses[$ext] } else { "other" }
+      if (-not $byType.ContainsKey($category)) { $byType[$category] = @{ count=0; bytes=0L } }
+      $byType[$category].count++
+      $byType[$category].bytes += $item.Length
+    }
   }
   $groups = foreach ($kind in @($byType.Keys | Sort-Object)) {
     [pscustomobject]@{
@@ -78,7 +98,7 @@ foreach ($root in $Roots) {
     inspected_files = $count
     category_summary = @($groups)
     truncated = $truncated
-    unreadable_entries_approx = $scanErrors.Count
+    unreadable_entries_approx = $unreadableCount
   }
 }
 $report = [pscustomobject]@{
