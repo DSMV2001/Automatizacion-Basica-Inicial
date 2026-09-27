@@ -4,6 +4,16 @@ MVP de automatización modular: FastAPI, webhook para Power Automate, simulació
 
 > **Estado:** prototipo inicial; NO está desplegado ni conectado todavía a Power Automate, MySQL ni a las cuentas de modelos. No pegar secretos ni datos de clientes en el repositorio.
 
+## Comprobaciones para la fase híbrida
+
+Antes de conectar proveedores, SQL o servicios en la nube, consulta la [guía en español de requisitos y diagnóstico](docs/REQUISITOS_Y_DIAGNOSTICO_ES.md). Incluye los paneles oficiales, datos que debes verificar y advertencias sobre secretos. En Windows puedes ejecutar el script **local y de solo lectura**, previa revisión:
+
+```powershell
+powershell -NoProfile -File .\scripts\diagnostico_local.ps1
+```
+
+Revisa el resultado antes de compartirlo. No se necesitan claves ni suscripciones API pagadas para las pruebas iniciales.
+
 ## Inicio local (Windows PowerShell)
 
 ```powershell
