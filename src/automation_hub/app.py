@@ -37,7 +37,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def execute(
         task: TaskRequest, x_hub_key: str | None = Header(default=None)
     ) -> dict[str, object]:
-        if not settings.hub_api_key or len(settings.hub_api_key) < 32:
+        if (not settings.hub_api_key or len(settings.hub_api_key) < 32
+                or settings.hub_api_key.startswith("REPLACE_")):
             raise HTTPException(503, "API authentication is not configured")
         if not x_hub_key or not hmac.compare_digest(x_hub_key, settings.hub_api_key):
             raise HTTPException(401, "Invalid API key")
