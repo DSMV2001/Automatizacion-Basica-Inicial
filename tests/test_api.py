@@ -3,7 +3,6 @@ from fastapi.testclient import TestClient
 from automation_hub.app import create_app
 from automation_hub.config import Settings
 
-
 SECRET = "a-test-secret-that-has-more-than-32-characters"
 PAYLOAD = {"task_type": "summarize", "input": "This is a test."}
 
