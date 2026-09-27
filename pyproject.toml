@@ -18,6 +18,8 @@ dev = ["pytest>=8,<10", "ruff>=0.9,<1"]
 where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+[tool.ruff.lint.isort]
+known-first-party = ["automation_hub"]
 [tool.ruff]
 target-version = "py311"
 line-length = 100
