@@ -60,3 +60,11 @@ def test_invalid_task_rejected():
         headers={"X-Hub-Key": SECRET},
     )
     assert response.status_code == 422
+
+def test_placeholder_key_rejected():
+    from automation_hub.config import Settings
+    placeholder = "REPLACE_WITH_A_RANDOM_32_CHAR_OR_LONGER_SECRET"
+    response = TestClient(create_app(Settings(hub_api_key=placeholder))).post(
+        "/v1/tasks/execute", json=PAYLOAD, headers={"X-Hub-Key": placeholder}
+    )
+    assert response.status_code == 503
