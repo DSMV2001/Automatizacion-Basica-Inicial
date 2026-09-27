@@ -85,7 +85,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 data = response.json()
                 result = data["choices"][0]["message"]["content"]
                 if not isinstance(result, str):
-                    raise ValueError("Unexpected gateway response")
+                    raise TypeError("Unexpected gateway response")
         except (httpx.HTTPError, ValueError, KeyError, IndexError, TypeError) as exc:
             # Suppress upstream details: these can contain credentials or private content.
             raise HTTPException(502, "LLM gateway request failed") from exc
